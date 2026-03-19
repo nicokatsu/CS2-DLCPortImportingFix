@@ -1,0 +1,7 @@
+.vs/
+.dotnet/
+.idea/
+DLCPortImportingFix/Library/
+DLCPortImportingFix/bin/
+DLCPortImportingFix/obj/
+*.DotSettings.user
