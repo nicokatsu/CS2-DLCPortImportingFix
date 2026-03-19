@@ -304,7 +304,10 @@ namespace DLCPortImportingFix
 
             for (var setupIndex = 0; setupIndex < setupData.Length; setupIndex++)
             {
-                setupData.GetItem(setupIndex, out _, out PathfindTargetSeeker<PathfindSetupBuffer> targetSeeker);
+                setupData.GetItem(setupIndex, out var buyer, out PathfindTargetSeeker<PathfindSetupBuffer> targetSeeker);
+
+                if (!instance.IsSupportedSupplementalBuyer(buyer))
+                    continue;
 
                 var request = targetSeeker.m_SetupQueueTarget;
                 var requestedResource = request.m_Resource;
@@ -338,6 +341,20 @@ namespace DLCPortImportingFix
                 return false;
 
             return true;
+        }
+
+        private bool IsSupportedSupplementalBuyer(Entity buyer)
+        {
+            if (!EntityManager.Exists(buyer))
+                return false;
+
+            if (EntityManager.HasComponent<Household>(buyer) ||
+                EntityManager.HasComponent<TouristHousehold>(buyer) ||
+                EntityManager.HasComponent<CommuterHousehold>(buyer) ||
+                EntityManager.HasComponent<HomelessHousehold>(buyer))
+                return false;
+
+            return EntityManager.HasComponent<CompanyData>(buyer) || EntityManager.HasComponent<BuyingCompany>(buyer);
         }
 
         private float CalculateSupplementalPenalty(Entity seller, Resource requestedResource, int requestedAmount)
