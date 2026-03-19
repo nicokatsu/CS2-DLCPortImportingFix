@@ -1,6 +1,6 @@
 # B&P Harbor Resource Importing Fix
 
-Fixes the bug where businesses in the city do not purchase or import goods from Beach Properties DLC cargo harbors.
+Fixes the bug where businesses in the city do not purchase or import goods from Bridges & Ports DLC cargo harbors.
 
 ## What it fixes
 
@@ -12,7 +12,7 @@ This mod patches the resource seller target setup so DLC harbors can participate
 
 - Works per harbor instance instead of rewriting a shared prefab resource list.
 - Supports different harbors of the same type managing different goods.
-- Requires the `Beach Properties` DLC.
+- Requires the `Bridges & Ports` DLC.
 
 ## Build
 

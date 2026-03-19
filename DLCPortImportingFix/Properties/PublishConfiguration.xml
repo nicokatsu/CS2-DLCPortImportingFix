@@ -9,7 +9,7 @@
 	<!--LongDescription Value="This is a long description" /-->
 	<LongDescription>## Why this fix is needed
 
-Businesses in the city do not purchase or import goods from B&amp;P DLC harbors at all. Even when the harbor has stock and is otherwise operating, buyers may still ignore it and send their trucks to other freight facilities or external road connections instead.
+Businesses in the city do not purchase or import goods from Bridges &amp; Ports DLC harbors at all. Even when the harbor has stock and is otherwise operating, buyers may still ignore it and send their trucks to other freight facilities or external road connections instead.
 
 This breaks the expected behavior of the DLC harbor and makes it much less useful in normal city logistics.
 
@@ -24,13 +24,14 @@ This mod fixes that behavior so DLC harbors can be used correctly for resource p
 	<!--Tag, can be set multiple times-->
 	<Tag Value="Code Mod" />
 	<!--Link to the forum post where the mod can be discussed-->
-	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/commercial-and-industrial-companies-dont-import-purchase-resources-from-b-p-dlc-ports-while-they-do-from-vanillia-or-other-fright-facilities.1879300/" />
+	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/paradox-modscities-skylines-ii-b-p-harbor-resource-importing-fix.1909883/" />
 	<!--Version of the mod-->
 	<ModVersion Value="1.0.0" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.5.*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<!--Required DLC, can be set multiple times. Supported values are "Landmark Buildings", "San Fransisco Set", "Beach Properties", "Urban Promenades", "Modern Architecture"-->
+	<RequiredDLC Value="Bridges &amp; Ports" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
 	<ChangeLog Value="Initial release. Fixes DLC cargo harbors not updating their managed cargo resource set correctly." />
 	<!--<ChangeLog>
