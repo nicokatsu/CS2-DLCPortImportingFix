@@ -28,6 +28,7 @@ namespace DLCPortImportingFix
             "CargoHarborComplex02",
             "CargoHarborComplex03"
         };
+        private const string TargetHarborPrefabPrefix = "CargoHarborComplex";
 
         private static readonly object PatchLock = new object();
         private static Dictionary<Entity, Resource> s_RuntimeResourcesByHarbor = new Dictionary<Entity, Resource>();
@@ -38,13 +39,16 @@ namespace DLCPortImportingFix
         private static readonly float CargoStationPerRequestPenalty = ReadStaticField("kCargoStationPerRequestPenalty", 0f);
         private static readonly int CargoStationMaxTripNeededQueue = ReadStaticField("kCargoStationMaxTripNeededQueue", int.MaxValue);
 
-        private const int SyncIntervalFrames = 256;
+        private const int SyncIntervalFrames = 2048;
         private const int CargoStationTargetFlag = 128;
-
         private EntityQuery m_HarborQuery;
-        private EntityQuery m_OwnerQuery;
+        private EntityQuery m_HarborChildQuery;
         private PrefabSystem m_PrefabSystem;
         private int m_NextSyncFrame;
+        private int m_RefreshDiagnosticsCount;
+        private HashSet<string> m_LastChildSnapshot = new HashSet<string>(StringComparer.Ordinal);
+        private readonly HashSet<Entity> m_TargetChildPrefabs = new HashSet<Entity>();
+        private readonly HashSet<Entity> m_NonTargetChildPrefabs = new HashSet<Entity>();
 
         protected override void OnCreate()
         {
@@ -56,13 +60,16 @@ namespace DLCPortImportingFix
                 ComponentType.ReadOnly<Game.Buildings.CargoTransportStation>(),
                 ComponentType.ReadOnly<PrefabRef>(),
                 ComponentType.Exclude<Deleted>());
-            m_OwnerQuery = GetEntityQuery(
+            m_HarborChildQuery = GetEntityQuery(
                 ComponentType.ReadOnly<Owner>(),
                 ComponentType.ReadOnly<PrefabRef>(),
+                ComponentType.ReadOnly<Game.Buildings.Building>(),
+                ComponentType.ReadOnly<Game.Buildings.CargoTransportStation>(),
+                ComponentType.ReadOnly<Game.Objects.SubObject>(),
                 ComponentType.Exclude<Deleted>());
 
             RequireForUpdate(m_HarborQuery);
-            RequireForUpdate(m_OwnerQuery);
+            RequireForUpdate(m_HarborChildQuery);
 
             EnsurePatched();
         }
@@ -82,6 +89,8 @@ namespace DLCPortImportingFix
         protected override void OnGameLoaded(Context serializationContext)
         {
             base.OnGameLoaded(serializationContext);
+            m_LastChildSnapshot.Clear();
+            s_RuntimeResourcesByHarbor = new Dictionary<Entity, Resource>();
             RefreshRuntimeResources("OnGameLoaded");
         }
 
@@ -91,17 +100,22 @@ namespace DLCPortImportingFix
             if (ReferenceEquals(s_Instance, this))
                 s_Instance = null;
             s_RuntimeResourcesByHarbor = new Dictionary<Entity, Resource>();
+            m_LastChildSnapshot = new HashSet<string>(StringComparer.Ordinal);
         }
 
         private void RefreshRuntimeResources(string phase)
         {
             var harbors = m_HarborQuery.ToEntityArray(Allocator.Temp);
-            var ownedEntities = m_OwnerQuery.ToEntityArray(Allocator.Temp);
+            var childBuildings = m_HarborChildQuery.ToEntityArray(Allocator.Temp);
 
             try
             {
                 var targetHarbors = new HashSet<Entity>();
-                var aggregated = new Dictionary<Entity, Resource>();
+                var currentSnapshot = new HashSet<string>(StringComparer.Ordinal);
+                var validChildren = new List<Entity>();
+                var validChildHarbors = new Dictionary<Entity, Entity>();
+                var targetChildCandidates = 0;
+                var targetChildResources = 0;
 
                 foreach (var harbor in harbors)
                 {
@@ -115,26 +129,51 @@ namespace DLCPortImportingFix
                     return;
                 }
 
-                foreach (var child in ownedEntities)
+                foreach (var child in childBuildings)
                 {
+                    if (!IsTargetHarborChild(child))
+                        continue;
+
+                    targetChildCandidates++;
+
                     var harbor = FindOwningHarbor(child, targetHarbors);
                     if (harbor == Entity.Null)
                         continue;
 
+                    currentSnapshot.Add($"{child}|{harbor}");
+                    validChildren.Add(child);
+                    validChildHarbors[child] = harbor;
+                }
+
+                if (phase != "OnGameLoaded" && SnapshotsEqual(m_LastChildSnapshot, currentSnapshot))
+                    return;
+
+                m_LastChildSnapshot = currentSnapshot;
+                var aggregated = new Dictionary<Entity, Resource>();
+
+                foreach (var child in validChildren)
+                {
+                    var harbor = validChildHarbors[child];
                     var childResources = GetManagedResources(child);
                     if (childResources == Resource.NoResource)
                         continue;
+
+                    targetChildResources++;
 
                     if (aggregated.TryGetValue(harbor, out var existing))
                         aggregated[harbor] = existing | childResources;
                     else
                         aggregated[harbor] = childResources;
+
                 }
 
                 s_RuntimeResourcesByHarbor = aggregated;
 
-                if (phase != "OnUpdate")
-                    Mod.log.Info($"[HarborResourceSellerPatchSystem] {phase} trackedHarbors={aggregated.Count}");
+                m_RefreshDiagnosticsCount++;
+                Mod.log.Info(
+                    $"[HarborResourceSellerPatchSystem] {phase} refresh#{m_RefreshDiagnosticsCount} " +
+                    $"harborQuery={harbors.Length} childQuery={childBuildings.Length} targetHarbors={targetHarbors.Count} " +
+                    $"targetChildCandidates={targetChildCandidates} targetChildResources={targetChildResources} trackedHarbors={aggregated.Count}");
             }
             catch (Exception ex)
             {
@@ -143,8 +182,33 @@ namespace DLCPortImportingFix
             finally
             {
                 harbors.Dispose();
-                ownedEntities.Dispose();
+                childBuildings.Dispose();
             }
+        }
+
+        private bool IsTargetHarborChild(Entity entity)
+        {
+            if (!EntityManager.HasComponent<PrefabRef>(entity))
+                return false;
+
+            var prefab = EntityManager.GetComponentData<PrefabRef>(entity).m_Prefab;
+            if (m_TargetChildPrefabs.Contains(prefab))
+                return true;
+
+            if (m_NonTargetChildPrefabs.Contains(prefab))
+                return false;
+
+            var prefabName = GetPrefabName(prefab);
+            var isTarget =
+                prefabName.StartsWith(TargetHarborPrefabPrefix, StringComparison.Ordinal) &&
+                (EntityManager.HasComponent<StorageCompanyData>(prefab) || EntityManager.HasComponent<StorageAreaData>(prefab));
+
+            if (isTarget)
+                m_TargetChildPrefabs.Add(prefab);
+            else
+                m_NonTargetChildPrefabs.Add(prefab);
+
+            return isTarget;
         }
 
         private Entity FindOwningHarbor(Entity entity, HashSet<Entity> targetHarbors)
@@ -364,6 +428,19 @@ namespace DLCPortImportingFix
             }
 
             return fallback;
+        }
+
+        private static bool SnapshotsEqual(
+            HashSet<string> previous,
+            HashSet<string> current)
+        {
+            if (ReferenceEquals(previous, current))
+                return true;
+
+            if (previous == null || current == null || previous.Count != current.Count)
+                return false;
+
+            return previous.SetEquals(current);
         }
 
         [HarmonyPatch]
