@@ -1,4 +1,4 @@
-# B&P Harbor Resource Importing Fix
+# Fix B&P Harbor Importing
 
 Fixes the bug where businesses in the city do not purchase or import goods from Bridges & Ports DLC cargo harbors.
 
