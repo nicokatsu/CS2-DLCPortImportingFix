@@ -46,7 +46,8 @@ namespace DLCPortImportingFix
         private PrefabSystem m_PrefabSystem;
         private int m_NextSyncFrame;
         private int m_RefreshDiagnosticsCount;
-        private HashSet<string> m_LastChildSnapshot = new HashSet<string>(StringComparer.Ordinal);
+        private HashSet<Entity> m_LastHarborSnapshot = new HashSet<Entity>();
+        private HashSet<Entity> m_LastChildSnapshot = new HashSet<Entity>();
         private readonly HashSet<Entity> m_TargetChildPrefabs = new HashSet<Entity>();
         private readonly HashSet<Entity> m_NonTargetChildPrefabs = new HashSet<Entity>();
 
@@ -58,15 +59,18 @@ namespace DLCPortImportingFix
             m_PrefabSystem = World.GetOrCreateSystemManaged<PrefabSystem>();
             m_HarborQuery = GetEntityQuery(
                 ComponentType.ReadOnly<Game.Buildings.CargoTransportStation>(),
+                ComponentType.ReadOnly<Game.Buildings.Building>(),
                 ComponentType.ReadOnly<PrefabRef>(),
-                ComponentType.Exclude<Deleted>());
+                ComponentType.Exclude<Deleted>(),
+                ComponentType.Exclude<Game.Tools.Temp>());
             m_HarborChildQuery = GetEntityQuery(
                 ComponentType.ReadOnly<Owner>(),
                 ComponentType.ReadOnly<PrefabRef>(),
                 ComponentType.ReadOnly<Game.Buildings.Building>(),
                 ComponentType.ReadOnly<Game.Buildings.CargoTransportStation>(),
                 ComponentType.ReadOnly<Game.Objects.SubObject>(),
-                ComponentType.Exclude<Deleted>());
+                ComponentType.Exclude<Deleted>(),
+                ComponentType.Exclude<Game.Tools.Temp>());
 
             RequireForUpdate(m_HarborQuery);
             RequireForUpdate(m_HarborChildQuery);
@@ -89,6 +93,7 @@ namespace DLCPortImportingFix
         protected override void OnGameLoaded(Context serializationContext)
         {
             base.OnGameLoaded(serializationContext);
+            m_LastHarborSnapshot.Clear();
             m_LastChildSnapshot.Clear();
             s_RuntimeResourcesByHarbor = new Dictionary<Entity, Resource>();
             RefreshRuntimeResources("OnGameLoaded");
@@ -100,7 +105,8 @@ namespace DLCPortImportingFix
             if (ReferenceEquals(s_Instance, this))
                 s_Instance = null;
             s_RuntimeResourcesByHarbor = new Dictionary<Entity, Resource>();
-            m_LastChildSnapshot = new HashSet<string>(StringComparer.Ordinal);
+            m_LastHarborSnapshot = new HashSet<Entity>();
+            m_LastChildSnapshot = new HashSet<Entity>();
         }
 
         private void RefreshRuntimeResources(string phase)
@@ -111,7 +117,8 @@ namespace DLCPortImportingFix
             try
             {
                 var targetHarbors = new HashSet<Entity>();
-                var currentSnapshot = new HashSet<string>(StringComparer.Ordinal);
+                var currentHarborSnapshot = new HashSet<Entity>();
+                var currentChildSnapshot = new HashSet<Entity>();
                 var validChildren = new List<Entity>();
                 var validChildHarbors = new Dictionary<Entity, Entity>();
                 var targetChildCandidates = 0;
@@ -120,7 +127,10 @@ namespace DLCPortImportingFix
                 foreach (var harbor in harbors)
                 {
                     if (TargetHarborPrefabNames.Contains(GetEntityPrefabName(harbor)))
+                    {
                         targetHarbors.Add(harbor);
+                        currentHarborSnapshot.Add(harbor);
+                    }
                 }
 
                 if (targetHarbors.Count == 0)
@@ -140,15 +150,18 @@ namespace DLCPortImportingFix
                     if (harbor == Entity.Null)
                         continue;
 
-                    currentSnapshot.Add($"{child}|{harbor}");
+                    currentChildSnapshot.Add(child);
                     validChildren.Add(child);
                     validChildHarbors[child] = harbor;
                 }
 
-                if (phase != "OnGameLoaded" && SnapshotsEqual(m_LastChildSnapshot, currentSnapshot))
+                if (phase != "OnGameLoaded" &&
+                    SnapshotsEqual(m_LastHarborSnapshot, currentHarborSnapshot) &&
+                    SnapshotsEqual(m_LastChildSnapshot, currentChildSnapshot))
                     return;
 
-                m_LastChildSnapshot = currentSnapshot;
+                m_LastHarborSnapshot = currentHarborSnapshot;
+                m_LastChildSnapshot = currentChildSnapshot;
                 var aggregated = new Dictionary<Entity, Resource>();
 
                 foreach (var child in validChildren)
@@ -448,8 +461,8 @@ namespace DLCPortImportingFix
         }
 
         private static bool SnapshotsEqual(
-            HashSet<string> previous,
-            HashSet<string> current)
+            HashSet<Entity> previous,
+            HashSet<Entity> current)
         {
             if (ReferenceEquals(previous, current))
                 return true;
