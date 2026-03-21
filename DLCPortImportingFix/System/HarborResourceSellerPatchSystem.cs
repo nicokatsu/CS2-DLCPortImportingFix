@@ -71,7 +71,6 @@ namespace DLCPortImportingFix
                 ComponentType.ReadOnly<Game.Objects.SubObject>(),
                 ComponentType.Exclude<Deleted>(),
                 ComponentType.Exclude<Game.Tools.Temp>());
-
             RequireForUpdate(m_HarborQuery);
             RequireForUpdate(m_HarborChildQuery);
 
@@ -368,31 +367,6 @@ namespace DLCPortImportingFix
                 return false;
 
             return EntityManager.HasComponent<CompanyData>(buyer) || EntityManager.HasComponent<BuyingCompany>(buyer);
-        }
-
-        private float CalculateSupplementalPenalty(Entity seller, Resource requestedResource, int requestedAmount)
-        {
-            var penalty = 0f;
-
-            if (EntityManager.HasComponent<ServiceAvailable>(seller))
-            {
-                var service = EntityManager.GetComponentData<ServiceAvailable>(seller);
-                penalty -= math.min(requestedAmount, service.m_ServiceAvailable) * 100f;
-            }
-            else if (requestedAmount > 0)
-            {
-                var available = EconomyUtils.GetResources(requestedResource, EntityManager.GetBuffer<Resources>(seller));
-                var ratio = math.min(1f, available / (float)requestedAmount);
-                penalty += 100f * (1f - ratio);
-            }
-
-            if (EntityManager.HasBuffer<TradeCost>(seller))
-            {
-                var tradeCost = EconomyUtils.GetTradeCost(requestedResource, EntityManager.GetBuffer<TradeCost>(seller));
-                penalty += tradeCost.m_BuyCost * requestedAmount * 0.01f;
-            }
-
-            return penalty * 100f;
         }
 
         private float CalculateSupplementalPenaltyLikeVanilla(Entity seller, Resource requestedResource, SetupQueueTarget request)

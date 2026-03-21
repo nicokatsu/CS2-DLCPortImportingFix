@@ -44,14 +44,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Lib.Harmony" Version="2.2.2" GeneratePathProperty="true" ExcludeAssets="all" PrivateAssets="all" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <Reference Include="0Harmony">
-            <HintPath>$(PkgLib_Harmony)\lib\net48\0Harmony.dll</HintPath>
-            <Private>false</Private>
-        </Reference>
+        <PackageReference Include="Lib.Harmony" Version="2.2.2" />
     </ItemGroup>
 
     <ItemGroup>
