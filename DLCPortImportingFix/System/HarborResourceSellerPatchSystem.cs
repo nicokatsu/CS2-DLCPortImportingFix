@@ -22,13 +22,6 @@ namespace DLCPortImportingFix
 {
     public partial class HarborResourceSellerPatchSystem : GameSystemBase
     {
-        private static readonly HashSet<string> TargetHarborPrefabNames = new HashSet<string>(StringComparer.Ordinal)
-        {
-            "CargoHarborComplex01",
-            "CargoHarborComplex02",
-            "CargoHarborComplex03"
-        };
-
         private static readonly object PatchLock = new object();
         private static HarborResourceSellerPatchSystem s_Instance;
         private static Harmony s_Harmony;
@@ -37,7 +30,6 @@ namespace DLCPortImportingFix
         private static readonly float CargoStationPerRequestPenalty = ReadStaticField("kCargoStationPerRequestPenalty", 0f);
         private static readonly int CargoStationMaxTripNeededQueue = ReadStaticField("kCargoStationMaxTripNeededQueue", int.MaxValue);
         private const int CargoStationTargetFlag = 128;
-
         private EntityQuery m_HarborQuery;
         private PrefabSystem m_PrefabSystem;
 
@@ -89,10 +81,10 @@ namespace DLCPortImportingFix
 
                     foreach (var harbor in harbors)
                     {
-                        if (!TargetHarborPrefabNames.Contains(GetEntityPrefabName(harbor)))
+                        if (!HarborPatchUtils.IsTargetHarbor(EntityManager, m_PrefabSystem, harbor))
                             continue;
 
-                        if (!TryGetCombinedStoredResources(harbor, out var combinedResources))
+                        if (!HarborPatchUtils.TryGetCombinedStoredResources(EntityManager, harbor, out var combinedResources))
                             continue;
 
                         if ((combinedResources & requestedResource) == Resource.NoResource)
@@ -116,30 +108,6 @@ namespace DLCPortImportingFix
             }
         }
 
-        private bool TryGetCombinedStoredResources(Entity harbor, out Resource combinedResources)
-        {
-            combinedResources = Resource.NoResource;
-
-            if (!EntityManager.HasComponent<PrefabRef>(harbor))
-                return false;
-
-            var harborPrefab = EntityManager.GetComponentData<PrefabRef>(harbor).m_Prefab;
-            if (!EntityManager.HasComponent<StorageCompanyData>(harborPrefab))
-                return false;
-
-            var combinedData = EntityManager.GetComponentData<StorageCompanyData>(harborPrefab);
-            var combinedAny = false;
-
-            if (EntityManager.HasBuffer<InstalledUpgrade>(harbor))
-            {
-                var upgrades = EntityManager.GetBuffer<InstalledUpgrade>(harbor);
-                combinedAny = UpgradeUtils.CombineStats(EntityManager, ref combinedData, upgrades);
-            }
-
-            combinedResources = combinedData.m_StoredResources;
-            return combinedAny || combinedResources != Resource.NoResource;
-        }
-
         private bool IsValidSupplementalSeller(Entity seller, Resource requestedResource, int requestedAmount)
         {
             if (!EntityManager.Exists(seller) || !EntityManager.HasBuffer<Resources>(seller))
@@ -160,13 +128,8 @@ namespace DLCPortImportingFix
             if (!EntityManager.Exists(buyer))
                 return false;
 
-            if (EntityManager.HasComponent<Household>(buyer) ||
-                EntityManager.HasComponent<TouristHousehold>(buyer) ||
-                EntityManager.HasComponent<CommuterHousehold>(buyer) ||
-                EntityManager.HasComponent<HomelessHousehold>(buyer))
-                return false;
-
-            return EntityManager.HasComponent<CompanyData>(buyer) || EntityManager.HasComponent<BuyingCompany>(buyer);
+            return EntityManager.HasComponent<CompanyData>(buyer) ||
+                   EntityManager.HasComponent<BuyingCompany>(buyer);
         }
 
         private float CalculateSupplementalPenaltyLikeVanilla(Entity seller, Resource requestedResource, SetupQueueTarget request)
@@ -218,26 +181,6 @@ namespace DLCPortImportingFix
             }
 
             return penalty * 100f;
-        }
-
-        private string GetEntityPrefabName(Entity entity)
-        {
-            if (!EntityManager.HasComponent<PrefabRef>(entity))
-                return string.Empty;
-
-            return GetPrefabName(EntityManager.GetComponentData<PrefabRef>(entity).m_Prefab);
-        }
-
-        private string GetPrefabName(Entity prefab)
-        {
-            try
-            {
-                return m_PrefabSystem.GetPrefabName(prefab) ?? string.Empty;
-            }
-            catch
-            {
-                return string.Empty;
-            }
         }
 
         private static void EnsurePatched()

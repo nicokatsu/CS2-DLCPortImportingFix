@@ -18,6 +18,7 @@ This breaks the expected behavior of the DLC harbor and makes it much less usefu
 ## What this mod fixes
 
 This mod fixes that behavior so DLC harbors can be used correctly for resource purchasing and importing.
+It also fixes a similar issue affecting mail transfer, where DLC cargo harbors could be skipped as valid targets.
 
 	</LongDescription>
 	<!--Thumbnail-->
@@ -28,14 +29,14 @@ This mod fixes that behavior so DLC harbors can be used correctly for resource p
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/fix-b-p-harbor-imports.1909883/" />
 	<!--Version of the mod-->
-	<ModVersion Value="1.2.0" />
+	<ModVersion Value="1.3.1" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.5.*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<!--Required DLC, can be set multiple times. Supported values are "Landmark Buildings", "San Fransisco Set", "Beach Properties", "Urban Promenades", "Modern Architecture"-->
 	<RequiredDLC Value="Bridges And Ports" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
-	<ChangeLog Value="Switched the harbor seller fix from cached resources to on-demand combined upgrade data." />
+	<ChangeLog Value="Reverted harbor buyer filtering to prevent pedestrians idling at harbors." />
 	<!--<ChangeLog>
 	</ChangeLog>-->
 	<!--External link, can be set multiple times. supported types are "discord", "github", "youtube", "twitch", "x", "paypal", "patreon", "buymeacoffee", "kofi", "crowdin", "gitlab", "gofundme"-->

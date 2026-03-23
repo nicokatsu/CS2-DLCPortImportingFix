@@ -12,6 +12,7 @@ namespace DLCPortImportingFix
 
         public void OnLoad(UpdateSystem updateSystem)
         {
+            updateSystem.UpdateAt<HarborMailTransferPatchSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<HarborResourceSellerPatchSystem>(SystemUpdatePhase.GameSimulation);
         }
 
