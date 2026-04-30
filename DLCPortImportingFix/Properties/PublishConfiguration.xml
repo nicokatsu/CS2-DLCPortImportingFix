@@ -2,23 +2,24 @@
 	<!--Id must be set in order to update existed mod. it is not required for publishing mod for the first time-->
 	<ModId Value="138257" />
 	<!--Name of the mod to display to players-->
-	<DisplayName Value="Fix B&amp;P Harbor Imports" />
+	<DisplayName Value="Fix B&amp;P Harbor Imports (Retired)" />
 	<!--Short description of the mod-->
 	<ShortDescription Value="Fixes the bug where businesses in the city do not import goods from DLC harbors." />
 	<!--Long description of the mod. Single line or multi line. Supports minimal markdown subset-->
 	<!--LongDescription Value="This is a long description" /-->
-	<LongDescription>## Why this fix is needed
+	<LongDescription>## Retired
 
-Businesses in the city do not purchase or import goods from Bridges &amp; Ports DLC harbors at all. Even when the harbor has stock and is otherwise operating, buyers may still ignore it and send their trucks to other freight facilities or external road connections instead.
+The Bridges &amp; Ports harbor import and mail transfer issues have now been fixed officially in the latest game version.
 
-In simple terms, the game looks at the main harbor building to decide what goods that harbor can supply, but the DLC harbor does not report the goods managed by its own child storage buildings correctly. As a result, the harbor has stock, but businesses still do not treat it as a valid supplier.
+Because of that, this mod now disables its fix automatically on game version 1.5.7f1 and newer. It should no longer affect your game on the latest version.
 
-This breaks the expected behavior of the DLC harbor and makes it much less useful in normal city logistics.
+If you are on the latest game version, feel free to unsubscribe. I am keeping this page available for now so players on older game versions can still use the fix if needed.
 
-## What this mod fixes
+## Original fix
 
-This mod fixes that behavior so DLC harbors can be used correctly for resource purchasing and importing.
-It also fixes a similar issue affecting mail transfer, where DLC cargo harbors could be skipped as valid targets.
+This mod originally fixed an issue where businesses could skip Bridges &amp; Ports DLC cargo harbors when importing goods.
+
+It also fixed a similar issue affecting mail transfer, where DLC cargo harbors could be skipped as valid mail transfer targets.
 
 	</LongDescription>
 	<!--Thumbnail-->
@@ -29,14 +30,14 @@ It also fixes a similar issue affecting mail transfer, where DLC cargo harbors c
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/fix-b-p-harbor-imports.1909883/" />
 	<!--Version of the mod-->
-	<ModVersion Value="1.3.1" />
+	<ModVersion Value="1.3.2" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.5.*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<!--Required DLC, can be set multiple times. Supported values are "Landmark Buildings", "San Fransisco Set", "Beach Properties", "Urban Promenades", "Modern Architecture"-->
 	<RequiredDLC Value="Bridges And Ports" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
-	<ChangeLog Value="Reverted harbor buyer filtering to prevent pedestrians idling at harbors." />
+	<ChangeLog Value="Disabled the fix on the latest game version because the issue has now been fixed officially. This mod is planned to be retired, so feel free to unsubscribe if you are on the latest game version." />
 	<!--<ChangeLog>
 	</ChangeLog>-->
 	<!--External link, can be set multiple times. supported types are "discord", "github", "youtube", "twitch", "x", "paypal", "patreon", "buymeacoffee", "kofi", "crowdin", "gitlab", "gofundme"-->
